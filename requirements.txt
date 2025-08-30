@@ -1,0 +1,10 @@
+streamlit
+langchain
+langsmith
+openai
+googlemaps
+apscheduler
+pandas
+plotly
+matplotlib
+python-dotenv
