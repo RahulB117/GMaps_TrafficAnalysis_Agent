@@ -1,3 +1,5 @@
 .env
 gmapEnv/
 API_Keys
+API_Testers
+agent/__pycache__
