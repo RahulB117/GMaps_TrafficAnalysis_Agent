@@ -3,7 +3,7 @@ from langchain_openai import ChatOpenAI
 from langchain.agents import create_tool_calling_agent, AgentExecutor
 from langchain.prompts import ChatPromptTemplate
 
-from tools import tools
+from agent.tools import tools
 
 # Enable LangSmith/Tracing
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
