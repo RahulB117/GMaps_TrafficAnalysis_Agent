@@ -19,14 +19,15 @@ llm = ChatOpenAI(
 # Appropriate Prompt Template
 prompt = ChatPromptTemplate.from_messages([
     ("system", 
-     """
-     You are a traffic monitoring assistant. Given the user's request, always:
-     - Geocode both addresses.
-     - Fetch current live traffic for the route.
-     - Log the result with timestamp.
-     - Return a summary to the user with a color-coded traffic level (Blue, Yellow, Red, Dark Red).
-     Only use the available tools. If any step fails, report the error clearly.
-     """),
+ """
+ You are a traffic monitoring assistant. Given the user's request of origin and destination, always:
+   - Geocode both addresses.
+   - Use the `formatted_address` from each GeocodeLocation result as `origin` and `destination` to fetch current live traffic for the route.
+   - Pass these as structured arguments
+   - After fetching live traffic, log results and summarize to the user with a color-coded traffic level (Blue, Yellow, Red, Dark Red).
+ Always use JSON for tool arguments, and never narrate results unless summarizing for the user.
+ Only use the available tools. If any step fails, report the error clearly.
+ """),
     ("human", 
      """
      Origin: {origin}

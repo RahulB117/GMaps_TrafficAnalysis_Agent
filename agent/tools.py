@@ -1,7 +1,8 @@
 import os
 from dotenv import load_dotenv
 
-from langchain.tools import Tool
+from pydantic import BaseModel, Field
+from langchain.tools import Tool, StructuredTool
 from datetime import datetime
 import googlemaps
 import json
@@ -11,6 +12,10 @@ import json
 load_dotenv()
 gkey = os.getenv("GOOGLE_MAPS_API_KEY")
 gmaps = googlemaps.Client(key=gkey)
+
+class RouteTrafficSchema(BaseModel):
+    origin: str = Field(..., description="Starting location (address or place name)")
+    destination: str = Field(..., description="Ending location (address or place name)")
 
 """
     Input: Takes an address or place name as string.
@@ -38,6 +43,7 @@ def geocode_location(address: str):
 """
 def get_route_traffic(origin: str, destination: str):
 
+    print(f"[DEBUG] RouteTraffic called with: origin={origin}, destination={destination}")
     time_now = datetime.now()
     # Use Directions API via gmaps.directions() to get live travel data
     directions = gmaps.directions(
@@ -106,9 +112,10 @@ tools = [
     Tool(name="GeocodeLocation",
          func=geocode_location,
          description="Uses Geocoding API from GCP to acquire lat/lng & formatted address."),
-    Tool(name="RouteTraffic",
+    StructuredTool.from_function(name="RouteTraffic",
          func=get_route_traffic,
-         description="Uses Directions API from GCP to get normal and live travel time for a route i.e., traffic info."),
+         description="Uses Directions API from GCP to get normal and live travel time for a route i.e., traffic info.",
+         args_schema=RouteTrafficSchema,),
     Tool(name="StoreResult",
          func=store_result,
          description="Appends traffic check result to a local JSON log."),
