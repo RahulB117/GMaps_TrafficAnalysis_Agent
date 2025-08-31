@@ -90,3 +90,4 @@ data/             # Generated logs and downloads
 Built by Rahul Babu | https://www.linkedin.com/in/rahul-babu117/
 
 ### License
+MIT License. See LICENSE file.
