@@ -4,15 +4,15 @@ import re
 import pandas as pd
 import plotly.express as px
 from agent.agent import create_traffic_agent
+from agent.utils import parse_agent_output
 
-
-
-# Parse minutes from agent/tool result
-def extract_minutes(duration_str):
-    if not duration_str:
-        return None
-    match = re.match(r"(\d+)", duration_str)
-    return int(match.group(1)) if match else None
+color_map = {
+    "Blue": "#3498db",       # Light blue
+    "Yellow": "#f1c40f",     # Yellow
+    "Red": "#e74c3c",        # Red
+    "Dark Red": "#8B0000",   # True dark red
+    None: "#95a5a6",         # Gray for unknown/missing
+}
 
 
 st.title("Google Maps Agentic Traffic Monitor")
@@ -62,14 +62,22 @@ if st.session_state['running']:
             "interval": interval_str
         }
         result = agent_executor.invoke(user_input)
-        # For MVP: parse traffic level, durations, and timestamp from agent output (improve as needed)
-        summary = result.get('output', '')
+        result = parse_agent_output(result)
         run_data = {
             "Run": i+1,
             "Timestamp": pd.Timestamp.now(),
-            "Summary": summary
+            "Summary": result.get('summary', ''),
+            "Base Duration (mins)": result.get('base_duration_mins', None),
+            "Travel Time (mins)": result.get('travel_time_mins', None),
+            "Traffic Level": result.get('traffic_level', None),
+            "Percent Increase": result.get('percent_increase', None),
+            "Origin": result.get('origin', ''),
+            "Destination": result.get('destination', ''),
+            "Interval": result.get('interval', ''),
+            "Timestamp (Agent)": result.get('timestamp', None),
         }
         st.session_state["run_results"].append(run_data)
+
         progress.progress((i+1)/stop_after)
         if i < stop_after - 1:
             time.sleep(interval_seconds)
@@ -80,25 +88,29 @@ if st.session_state['running']:
 if st.session_state["run_results"]:
     df = pd.DataFrame(st.session_state["run_results"])
     st.subheader("Run Results Table")
-    st.dataframe(df, use_container_width=True)
+    st.dataframe(df, width='stretch')
 
-    # Optionally, parse durations for plotting (simple string split, can improve with regex)
+    # Parse durations for plotting
     try:
-        df['Travel Time (mins)'] = df['Summary'].str.extract(r"estimated travel time is \*\*(\d+)")
-        df['Travel Time (mins)'] = pd.to_numeric(df['Travel Time (mins)'])
-        fig = px.line(
-            df, 
-            x="Timestamp", 
+        fig = px.scatter(
+            df,
+            x="Timestamp",
             y="Travel Time (mins)",
-            title="Travel Time Over Runs",
-            markers=True
+            color="Traffic Level",
+            color_discrete_map=color_map,
+            title="Travel Time with Traffic Level",
+            labels={"Travel Time (mins)": "Travel Time (mins)"}
         )
-        st.plotly_chart(fig, use_container_width=True)
+        fig.add_traces(px.line(
+            df, x="Timestamp",
+            y="Base Duration (mins)",
+            line_shape="linear"
+            ).data)
+        st.plotly_chart(fig, width='stretch')
+
     except Exception as e:
         st.info("Plot unavailable (could not extract travel time).")
-
-    # Download
-    st.download_button("Download CSV", df.to_csv(index=False), "traffic_results.csv", "text/csv")
+        st.download_button("Download CSV", df.to_csv(index=False), "traffic_results.csv", "text/csv")
 
 # --- 4. (Feedback form - PINNED for later) ---
 # st.form(...) etc. (to be added in next version)

@@ -4,6 +4,7 @@ from langchain.agents import create_tool_calling_agent, AgentExecutor
 from langchain.prompts import ChatPromptTemplate
 
 from agent.tools import tools
+from agent.utils import parse_agent_output
 
 # Enable LangSmith/Tracing
 os.environ["LANGCHAIN_TRACING_V2"] = "true"
@@ -24,8 +25,17 @@ prompt = ChatPromptTemplate.from_messages([
    - Geocode both addresses.
    - Use the `formatted_address` from each GeocodeLocation result as `origin` and `destination` to fetch current live traffic for the route.
    - Pass these as structured arguments
-   - After fetching live traffic, log results and summarize to the user with a color-coded traffic level (Blue, Yellow, Red, Dark Red).
- Always use JSON for tool arguments, and never narrate results unless summarizing for the user.
+   - After fetching live traffic, log the results and return a JSON object containing:
+    - origin: string
+    - destination: string
+    - interval: string
+    - summary: user-friendly markdown summary (1 or 2 lines only)
+    - base_duration_mins: integer (travel time without traffic in minutes)
+    - travel_time_mins: integer (travel time with current traffic in minutes)
+    - traffic_level: string (Blue, Yellow, Red, Dark Red)
+    - percent_increase: string (ex - '12.5%')
+    - timestamp: ISO8601 string
+ Do NOT return plain text—always respond with a JSON object with these fields.
  Only use the available tools. If any step fails, report the error clearly.
  """),
     ("human", 
@@ -60,5 +70,6 @@ if __name__ == "__main__":
 
     print("\n----- AGENT TEST START -----\n")
     result = agent_executor.invoke(user_input)
+    result_updated = parse_agent_output(result)
     print("\n----- AGENT OUTPUT -----\n")
-    print(result)
+    print(result_updated)
