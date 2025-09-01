@@ -9,9 +9,9 @@ from agent.agent import create_traffic_agent
 from agent.utils import parse_agent_output
 from dotenv import load_dotenv
 
-
+# Added compatibility for LangServe
 load_dotenv()
-AGENT_ENDPOINT_URL = os.getenv("AGENT_ENDPOINT_URL", "http://localhost:8000/agent/invoke")
+AGENT_ENDPOINT_URL = os.getenv("AGENT_ENDPOINT_URL", "http://localhost:8000/agent")
 agent_executor = RemoteRunnable(AGENT_ENDPOINT_URL)
 
 color_map = {
@@ -58,17 +58,18 @@ if st.button("Stop Monitoring"):
 if 'running' not in st.session_state:
     st.session_state['running'] = False
 
-# Agent Loop: Collect Results
+# Agent Loop
 if st.session_state['running']:
-    #agent_executor = create_traffic_agent()
-
     progress = st.progress(0)
     for i in range(stop_after):
         st.write(f"**Run {i+1} of {stop_after}**")
+        # Changed input parser due to LangServe compatibility
         user_input = {
-            "origin": origin,
-            "destination": destination,
-            "interval": interval_str
+            "input": {
+                "origin": origin,
+                "destination": destination,
+                "interval": interval_str
+            }
         }
         result = agent_executor.invoke(user_input)
         result = parse_agent_output(result)
@@ -120,6 +121,3 @@ if st.session_state["run_results"]:
     except Exception as e:
         st.info("Plot unavailable (could not extract travel time).")
         st.download_button("Download CSV", df.to_csv(index=False), "traffic_results.csv", "text/csv")
-
-# --- 4. (Feedback form - PINNED for later) ---
-# st.form(...) etc. (to be added in next version)

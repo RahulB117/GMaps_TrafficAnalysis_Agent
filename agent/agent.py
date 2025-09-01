@@ -2,6 +2,7 @@ import os
 from langchain_openai import ChatOpenAI
 from langchain.agents import create_tool_calling_agent, AgentExecutor
 from langchain.prompts import ChatPromptTemplate
+from langchain_core.runnables import Runnable
 
 from agent.tools import tools
 from agent.utils import parse_agent_output
@@ -53,14 +54,24 @@ def create_traffic_agent():
         tools=tools,
         prompt=prompt
     )
-    return AgentExecutor(agent=agent, tools=tools, verbose=True)
+    executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
+    # Class InputUnwrapper added to handle input parsing issues
+    # Compatibility with LangServe
+    class InputUnwrapper(Runnable):
+        def invoke(self, input, config=None, **kwargs):
+            if isinstance(input, dict) and "input" in input and isinstance(input["input"], dict):
+                input = input["input"]
+            return executor.invoke(input, config=config, **kwargs)
 
-# ---- Quick Test Script ----
+    return InputUnwrapper()
+
+# Smoke-test
+# Modify Line 7 and 8, remove agent.
 if __name__ == "__main__":
     agent_executor = create_traffic_agent()
     origin = "Whitefield, Bangalore"
     destination = "MG Road, Bangalore"
-    interval = "1 min"  # For testing
+    interval = "1 min"
 
     user_input = {
         "origin": origin,
@@ -68,8 +79,8 @@ if __name__ == "__main__":
         "interval": interval
     }
 
-    print("\n----- AGENT TEST START -----\n")
+    print("\n##### AGENT TEST START #####\n")
     result = agent_executor.invoke(user_input)
     result_updated = parse_agent_output(result)
-    print("\n----- AGENT OUTPUT -----\n")
+    print("\n##### AGENT TEST OUTPUT #####\n")
     print(result_updated)

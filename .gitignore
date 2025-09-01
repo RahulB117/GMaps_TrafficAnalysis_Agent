@@ -1,5 +1,10 @@
+# Do not share environment variables and API keys
 .env
+
+# Virtual Environment
 gmapEnv/
+
+# Misc folders
 API_Keys
 API_Testers
 agent/__pycache__

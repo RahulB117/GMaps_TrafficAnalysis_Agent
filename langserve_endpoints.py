@@ -9,10 +9,10 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# # (Optional) Enable CORS for remote frontend access
+# # Enable CORS for remote frontend access
 # app.add_middleware(
 #     CORSMiddleware,
-#     allow_origins=["*"],   # For production, restrict this!
+#     allow_origins=["*"],
 #     allow_credentials=True,
 #     allow_methods=["*"],
 #     allow_headers=["*"],
@@ -23,11 +23,6 @@ agent_executor = create_traffic_agent()
 add_routes(app,
            agent_executor,
            path="/agent")
-
-# Health check
-@app.get("/")
-def root():
-    return {"status": "ok", "msg": "LangServe Traffic Agent is running."}
 
 if __name__ == "__main__":
     import uvicorn
