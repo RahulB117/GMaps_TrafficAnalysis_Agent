@@ -1,10 +1,18 @@
 import streamlit as st
 import time
 import re
+import os
 import pandas as pd
 import plotly.express as px
+from langserve import RemoteRunnable
 from agent.agent import create_traffic_agent
 from agent.utils import parse_agent_output
+from dotenv import load_dotenv
+
+
+load_dotenv()
+AGENT_ENDPOINT_URL = os.getenv("AGENT_ENDPOINT_URL", "http://localhost:8000/agent/invoke")
+agent_executor = RemoteRunnable(AGENT_ENDPOINT_URL)
 
 color_map = {
     "Blue": "#3498db",       # Light blue
@@ -52,7 +60,8 @@ if 'running' not in st.session_state:
 
 # Agent Loop: Collect Results
 if st.session_state['running']:
-    agent_executor = create_traffic_agent()
+    #agent_executor = create_traffic_agent()
+
     progress = st.progress(0)
     for i in range(stop_after):
         st.write(f"**Run {i+1} of {stop_after}**")
